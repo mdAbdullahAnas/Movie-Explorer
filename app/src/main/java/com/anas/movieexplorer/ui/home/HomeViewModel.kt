@@ -14,56 +14,85 @@ class HomeViewModel : ViewModel() {
 
     private val repository = MovieRepository(RetrofitClient.api)
 
-    private val _movies = MutableStateFlow<List<MovieDto>>(emptyList())
-    val movies: StateFlow<List<MovieDto>> = _movies
+    // POPULAR MOVIES
+    private val _movies =
+        MutableStateFlow<List<MovieDto>>(emptyList())
 
+    val movies: StateFlow<List<MovieDto>> =
+        _movies
+
+
+    // NOW PLAYING MOVIES
     private val _nowPlayingMovies =
         MutableStateFlow<List<MovieDto>>(emptyList())
 
     val nowPlayingMovies: StateFlow<List<MovieDto>> =
         _nowPlayingMovies
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
 
+    // TOP RATED MOVIES
+    private val _topRatedMovies =
+        MutableStateFlow<List<MovieDto>>(emptyList())
+
+    val topRatedMovies: StateFlow<List<MovieDto>> =
+        _topRatedMovies
+
+
+    // LOADING
+    private val _isLoading =
+        MutableStateFlow(false)
+
+    val isLoading: StateFlow<Boolean> =
+        _isLoading
+
+
+    // LOAD POPULAR
     fun loadPopularMovies() {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
 
-                val response = repository.getPopularMovies()
+                val response =
+                    repository.getPopularMovies()
 
                 Log.d(
                     "MOVIE_TEST",
                     "Popular movies: ${response.results.size}"
                 )
 
-                _movies.value = response.results
+                _movies.value =
+                    response.results
 
             } catch (e: Exception) {
+
                 Log.e(
                     "MOVIE_TEST",
                     "Popular API ERROR",
                     e
                 )
+
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
+
+    // LOAD NOW PLAYING
     fun loadNowPlayingMovies() {
         viewModelScope.launch {
             try {
 
-                val response = repository.getNowPlayingMovies()
+                val response =
+                    repository.getNowPlayingMovies()
 
                 Log.d(
                     "MOVIE_TEST",
                     "Now Playing movies: ${response.results.size}"
                 )
 
-                _nowPlayingMovies.value = response.results
+                _nowPlayingMovies.value =
+                    response.results
 
             } catch (e: Exception) {
 
@@ -75,4 +104,33 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
+
+
+    // LOAD TOP RATED
+    fun loadTopRatedMovies() {
+        viewModelScope.launch {
+            try {
+
+                val response =
+                    repository.getTopRatedMovies()
+
+                Log.d(
+                    "MOVIE_TEST",
+                    "Top Rated movies: ${response.results.size}"
+                )
+
+                _topRatedMovies.value =
+                    response.results
+
+            } catch (e: Exception) {
+
+                Log.e(
+                    "MOVIE_TEST",
+                    "Top Rated API ERROR",
+                    e
+                )
+            }
+        }
+    }
 }
+

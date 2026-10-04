@@ -19,4 +19,12 @@ interface MovieApiService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): MovieResponse
+
+    @GET("3/movie/top_rated")
+    suspend fun getTopRatedMovies(
+        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1
+    ): MovieResponse
+
 }

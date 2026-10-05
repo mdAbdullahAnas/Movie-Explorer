@@ -14,8 +14,9 @@ val tmdbApiKey = localProperties.getProperty("TMDB_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
-    //alias(libs.plugins.ksp)
+     alias(libs.plugins.ksp)
     //alias(libs.plugins.hilt)
+
 }
 
 android {
@@ -62,47 +63,51 @@ android {
 }
 
 dependencies {
+
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 
-
-    //new
-
+    // Retrofit
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
+    // OkHttp
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
 
+    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // Lifecycle
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.livedata.ktx)
 
+    // Navigation
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
 
+    // RecyclerView
     implementation(libs.recyclerview)
 
+
+    // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
+    // Hilt
     implementation(libs.hilt.android)
 
-
-    //ksp(libs.hilt.compiler)
-
+    // Coil
     implementation(libs.coil)
 
+    // CardView
     implementation("androidx.cardview:cardview:1.0.0")
-
-
-
-
 }

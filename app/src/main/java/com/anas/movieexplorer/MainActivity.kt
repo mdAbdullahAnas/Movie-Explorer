@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import com.anas.movieexplorer.ui.home.HomeFragment
+import com.anas.movieexplorer.ui.favourite.`FavoritesFragment`
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,7 +33,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<android.view.View>(R.id.navFavorites).setOnClickListener {
-            // Favorites screen পরে এখানে add করব
+            supportFragmentManager.beginTransaction()
+                .replace(
+                    R.id.mainFragmentContainer,
+                    FavoritesFragment()
+                )
+                .commit()
+
             selectBottomItem("favorites")
         }
     }

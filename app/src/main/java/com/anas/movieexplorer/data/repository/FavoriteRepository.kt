@@ -27,4 +27,5 @@ class FavoriteRepository(
     suspend fun getFavoriteById(movieId: Int): FavoriteMovieEntity? {
         return dao.getFavoriteById(movieId)
     }
+
 }

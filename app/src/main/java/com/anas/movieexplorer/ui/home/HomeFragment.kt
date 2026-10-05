@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.anas.movieexplorer.MainActivity
 import com.anas.movieexplorer.R
 import com.anas.movieexplorer.databinding.FragmentHomeBinding
 import com.anas.movieexplorer.ui.details.DetailsFragment
@@ -47,6 +48,11 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        // SEARCH BUTTON
+        binding.btnSearch.setOnClickListener {
+            (requireActivity() as MainActivity).openSearchScreen()
+        }
 
         setupPopularMovies()
         setupNowPlayingMovies()

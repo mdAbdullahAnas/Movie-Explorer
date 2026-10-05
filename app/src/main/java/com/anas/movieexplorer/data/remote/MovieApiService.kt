@@ -35,4 +35,13 @@ interface MovieApiService {
         @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
         @Query("language") language: String = "en-US"
     ): MovieDetailsResponse
+
+    @GET("3/search/movie")
+    suspend fun searchMovies(
+        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("query") query: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("include_adult") includeAdult: Boolean = false
+    ): MovieResponse
 }

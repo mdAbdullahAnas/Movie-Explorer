@@ -1,4 +1,3 @@
-
 package com.anas.movieexplorer.ui.home
 
 import android.os.Bundle
@@ -10,7 +9,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.anas.movieexplorer.R
 import com.anas.movieexplorer.databinding.FragmentHomeBinding
+import com.anas.movieexplorer.ui.details.DetailsFragment
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
@@ -38,8 +39,6 @@ class HomeFragment : Fragment() {
             false
         )
 
-        Log.d("MOVIE_TEST", "FragmentHomeBinding inflated")
-
         return binding.root
     }
 
@@ -49,74 +48,42 @@ class HomeFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        Log.d("MOVIE_TEST", "HomeFragment onViewCreated")
-
-        // POPULAR
         setupPopularMovies()
-
-        Log.d(
-            "MOVIE_TEST",
-            "Popular RecyclerView setup done"
-        )
-
-        // NOW PLAYING
         setupNowPlayingMovies()
-
-        Log.d(
-            "MOVIE_TEST",
-            "Now Playing RecyclerView setup done"
-        )
-
-        // TOP RATED
         setupTopRatedMovies()
 
-        Log.d(
-            "MOVIE_TEST",
-            "Top Rated RecyclerView setup done"
-        )
-
-        // OBSERVE ALL MOVIES
         observeMovies()
 
-        Log.d(
-            "MOVIE_TEST",
-            "Movie observers started"
-        )
-
-        // API CALLS
         viewModel.loadPopularMovies()
-
-        Log.d(
-            "MOVIE_TEST",
-            "Popular movies API requested"
-        )
-
         viewModel.loadNowPlayingMovies()
-
-        Log.d(
-            "MOVIE_TEST",
-            "Now Playing movies API requested"
-        )
-
         viewModel.loadTopRatedMovies()
-
-        Log.d(
-            "MOVIE_TEST",
-            "Top Rated movies API requested"
-        )
     }
 
+    // --------------------------------------------------
+    // OPEN DETAILS
+    // --------------------------------------------------
+
+    private fun openMovieDetails(movieId: Int) {
+
+        Log.d(
+            "MOVIE_TEST",
+            "Opening movie details: $movieId"
+        )
+
+        parentFragmentManager.beginTransaction()
+            .replace(
+                R.id.mainFragmentContainer,
+                DetailsFragment.newInstance(movieId)
+            )
+            .addToBackStack(null)
+            .commit()
+    }
 
     // --------------------------------------------------
     // POPULAR MOVIES
     // --------------------------------------------------
 
     private fun setupPopularMovies() {
-
-        Log.d(
-            "MOVIE_TEST",
-            "setupPopularMovies()"
-        )
 
         movieAdapter = MovieAdapter { movie ->
 
@@ -125,7 +92,7 @@ class HomeFragment : Fragment() {
                 "Popular movie clicked: ${movie.title}"
             )
 
-            // Details screen পরে এখানে add করব
+            openMovieDetails(movie.id)
         }
 
         binding.recyclerViewMovies.apply {
@@ -138,24 +105,13 @@ class HomeFragment : Fragment() {
 
             adapter = movieAdapter
         }
-
-        Log.d(
-            "MOVIE_TEST",
-            "Popular adapter attached"
-        )
     }
-
 
     // --------------------------------------------------
     // NOW PLAYING MOVIES
     // --------------------------------------------------
 
     private fun setupNowPlayingMovies() {
-
-        Log.d(
-            "MOVIE_TEST",
-            "setupNowPlayingMovies()"
-        )
 
         nowPlayingAdapter = MovieAdapter { movie ->
 
@@ -164,7 +120,7 @@ class HomeFragment : Fragment() {
                 "Now Playing movie clicked: ${movie.title}"
             )
 
-            // Details screen পরে এখানে add করব
+            openMovieDetails(movie.id)
         }
 
         binding.recyclerViewNowPlaying.apply {
@@ -177,24 +133,13 @@ class HomeFragment : Fragment() {
 
             adapter = nowPlayingAdapter
         }
-
-        Log.d(
-            "MOVIE_TEST",
-            "Now Playing adapter attached"
-        )
     }
-
 
     // --------------------------------------------------
     // TOP RATED MOVIES
     // --------------------------------------------------
 
     private fun setupTopRatedMovies() {
-
-        Log.d(
-            "MOVIE_TEST",
-            "setupTopRatedMovies()"
-        )
 
         topRatedAdapter = MovieAdapter { movie ->
 
@@ -203,7 +148,7 @@ class HomeFragment : Fragment() {
                 "Top Rated movie clicked: ${movie.title}"
             )
 
-            // Details screen পরে এখানে add করব
+            openMovieDetails(movie.id)
         }
 
         binding.recyclerViewTopRated.apply {
@@ -216,13 +161,7 @@ class HomeFragment : Fragment() {
 
             adapter = topRatedAdapter
         }
-
-        Log.d(
-            "MOVIE_TEST",
-            "Top Rated adapter attached"
-        )
     }
-
 
     // --------------------------------------------------
     // OBSERVE MOVIES
@@ -230,13 +169,6 @@ class HomeFragment : Fragment() {
 
     private fun observeMovies() {
 
-        Log.d(
-            "MOVIE_TEST",
-            "observeMovies() started"
-        )
-
-
-        // POPULAR
         viewLifecycleOwner.lifecycleScope.launch {
 
             viewModel.movies.collect { movies ->
@@ -250,8 +182,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-
-        // NOW PLAYING
         viewLifecycleOwner.lifecycleScope.launch {
 
             viewModel.nowPlayingMovies.collect { movies ->
@@ -265,8 +195,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-
-        // TOP RATED
         viewLifecycleOwner.lifecycleScope.launch {
 
             viewModel.topRatedMovies.collect { movies ->
@@ -281,17 +209,10 @@ class HomeFragment : Fragment() {
         }
     }
 
-
     override fun onDestroyView() {
-
-        Log.d(
-            "MOVIE_TEST",
-            "HomeFragment onDestroyView"
-        )
 
         super.onDestroyView()
 
         _binding = null
     }
 }
-

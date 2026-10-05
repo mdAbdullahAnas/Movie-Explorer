@@ -188,7 +188,7 @@
                     android:layout_height="52dp"
                     android:layout_marginTop="30dp"
                     android:backgroundTint="#1976F3"
-                    android:text="♥  Add to Favourites"
+                    android:text="♥ Add to Favourites"
                     android:textAllCaps="false"
                     android:textColor="@android:color/white"
                     android:textSize="14sp" />

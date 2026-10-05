@@ -1,30 +1,44 @@
 package com.anas.movieexplorer.ui.details
 
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import coil.load
-import com.anas.movieexplorer.R
-import com.anas.movieexplorer.data.remote.MovieApiService
-import com.anas.movieexplorer.databinding.FragmentDetailsBinding
 import com.anas.movieexplorer.BuildConfig
+import com.anas.movieexplorer.R
+import com.anas.movieexplorer.data.local.FavoriteMovieEntity
+import com.anas.movieexplorer.data.local.MovieDatabase
+import com.anas.movieexplorer.data.remote.MovieApiService
+import com.anas.movieexplorer.data.repository.FavoriteRepository
+import com.anas.movieexplorer.databinding.FragmentDetailsBinding
+
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import android.animation.ObjectAnimator
-import android.view.animation.LinearInterpolator
+import kotlin.getValue
+import kotlin.jvm.java
+
+import com.anas.movieexplorer.ui.favourite.FavoriteViewModel
+import com.anas.movieexplorer.ui.favourite.FavoriteViewModelFactory
 
 
 class DetailsFragment : Fragment() {
 
     private var _binding: FragmentDetailsBinding? = null
     private val binding get() = _binding!!
+
     private var shimmerAnimator: ObjectAnimator? = null
+
+    private var currentMovie: FavoriteMovieEntity? = null
+
     private val api: MovieApiService by lazy {
 
         Retrofit.Builder()
@@ -32,6 +46,20 @@ class DetailsFragment : Fragment() {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(MovieApiService::class.java)
+    }
+
+    private val favoriteViewModel: FavoriteViewModel by lazy {
+
+        val database = MovieDatabase.getDatabase(requireContext())
+
+        val repository = FavoriteRepository(
+            database.favoriteMovieDao()
+        )
+
+        ViewModelProvider(
+            this,
+            FavoriteViewModelFactory(repository)
+        )[FavoriteViewModel::class.java]
     }
 
     override fun onCreateView(
@@ -63,48 +91,61 @@ class DetailsFragment : Fragment() {
         }
 
         setupButtons()
-
+        observeFavourite(movieId)
         loadMovieDetails(movieId)
     }
 
-    private fun startShimmer() {
+    // --------------------------------------------------
+    // FAVOURITE STATE
+    // --------------------------------------------------
 
-        binding.loadingOverlay.visibility = View.VISIBLE
+    private fun observeFavourite(movieId: Int) {
 
-        binding.shimmerHighlight.post {
+        viewLifecycleOwner.lifecycleScope.launch {
 
-            val parentWidth = binding.loadingOverlay.width
-            val highlightWidth = binding.shimmerHighlight.width
+            favoriteViewModel
+                .isFavorite(movieId)
+                .collect { isFavorite ->
 
-            shimmerAnimator?.cancel()
-
-            shimmerAnimator = ObjectAnimator.ofFloat(
-                binding.shimmerHighlight,
-                View.TRANSLATION_X,
-                -highlightWidth.toFloat(),
-                parentWidth.toFloat()
-            ).apply {
-
-                duration = 1000L
-
-                repeatCount = ObjectAnimator.INFINITE
-
-                interpolator = LinearInterpolator()
-
-                start()
-            }
+                    updateFavouriteUI(isFavorite)
+                }
         }
     }
 
-    private fun stopShimmer() {
+    private fun updateFavouriteUI(isFavorite: Boolean) {
 
-        shimmerAnimator?.cancel()
-        shimmerAnimator = null
+        if (isFavorite) {
 
-        binding.loadingOverlay.visibility = View.GONE
+            binding.btnFavourite.text =
+                "♥  Added to Favourites"
+
+            binding.btnFavouriteIcon.setImageResource(
+                R.drawable.ic_favorite
+            )
+
+            binding.btnFavouriteIcon.contentDescription =
+                "Remove from favourites"
+
+        } else {
+
+            binding.btnFavourite.text =
+                "♡  Add to Favourites"
+
+            binding.btnFavouriteIcon.setImageResource(
+                R.drawable.ic_favorite_border
+            )
+
+            binding.btnFavouriteIcon.contentDescription =
+                "Add to favourites"
+        }
     }
 
+    private fun toggleFavourite() {
 
+        val movie = currentMovie ?: return
+
+        favoriteViewModel.toggleFavorite(movie)
+    }
 
     // --------------------------------------------------
     // BUTTONS
@@ -119,38 +160,12 @@ class DetailsFragment : Fragment() {
 
         binding.btnFavourite.setOnClickListener {
 
-            if (
-                binding.btnFavourite.text
-                    .toString()
-                    .contains("Add")
-            ) {
-
-                binding.btnFavourite.text =
-                    "♥  Added to Favourites"
-
-            } else {
-
-                binding.btnFavourite.text =
-                    "♥  Add to Favourites"
-            }
+            toggleFavourite()
         }
 
         binding.btnFavouriteIcon.setOnClickListener {
 
-            if (
-                binding.btnFavourite.text
-                    .toString()
-                    .contains("Add")
-            ) {
-
-                binding.btnFavourite.text =
-                    "♥  Added to Favourites"
-
-            } else {
-
-                binding.btnFavourite.text =
-                    "♥  Add to Favourites"
-            }
+            toggleFavourite()
         }
     }
 
@@ -169,11 +184,17 @@ class DetailsFragment : Fragment() {
                 val movie =
                     api.getMovieDetails(movieId)
 
-                // Title
+                // ------------------------------------------
+                // TITLE
+                // ------------------------------------------
+
                 binding.movieTitle.text =
                     movie.title
 
-                // Year
+                // ------------------------------------------
+                // YEAR
+                // ------------------------------------------
+
                 val year =
                     movie.release_date
                         ?.takeIf { it.length >= 4 }
@@ -183,21 +204,30 @@ class DetailsFragment : Fragment() {
                 binding.releaseYear.text =
                     year
 
-                // Runtime
+                // ------------------------------------------
+                // RUNTIME
+                // ------------------------------------------
+
                 val runtime =
                     movie.runtime ?: 0
 
                 binding.runtime.text =
                     formatRuntime(runtime)
 
-                // Rating
+                // ------------------------------------------
+                // RATING
+                // ------------------------------------------
+
                 binding.rating.text =
                     String.format(
                         "%.1f",
                         movie.vote_average ?: 0.0
                     )
 
-                // Overview
+                // ------------------------------------------
+                // OVERVIEW
+                // ------------------------------------------
+
                 binding.overview.text =
                     if (!movie.overview.isNullOrBlank()) {
                         movie.overview
@@ -205,7 +235,10 @@ class DetailsFragment : Fragment() {
                         "No overview available."
                     }
 
-                // Backdrop
+                // ------------------------------------------
+                // BACKDROP
+                // ------------------------------------------
+
                 if (!movie.backdrop_path.isNullOrBlank()) {
 
                     val backdropUrl =
@@ -216,17 +249,32 @@ class DetailsFragment : Fragment() {
                     }
                 }
 
-                // Genres
+                // ------------------------------------------
+                // GENRES
+                // ------------------------------------------
+
                 setupGenres(movie.genres)
 
-                // Stop shimmer
+                // ------------------------------------------
+                // ROOM MOVIE
+                // ------------------------------------------
+
+                currentMovie = FavoriteMovieEntity(
+                    id = movie.id,
+                    title = movie.title,
+                    posterPath = movie.poster_path,
+                    backdropPath = movie.backdrop_path,
+                    overview = movie.overview,
+                    releaseDate = movie.release_date,
+                    rating = movie.vote_average ?: 0.0
+                )
+
                 stopShimmer()
 
             } catch (e: Exception) {
 
                 e.printStackTrace()
 
-                // Stop shimmer even if API fails
                 stopShimmer()
 
                 binding.movieTitle.text =
@@ -239,17 +287,71 @@ class DetailsFragment : Fragment() {
     }
 
     // --------------------------------------------------
+    // SHIMMER
+    // --------------------------------------------------
+
+    private fun startShimmer() {
+
+        binding.loadingOverlay.visibility =
+            View.VISIBLE
+
+        binding.shimmerHighlight.post {
+
+            val parentWidth =
+                binding.loadingOverlay.width
+
+            val highlightWidth =
+                binding.shimmerHighlight.width
+
+            shimmerAnimator?.cancel()
+
+            shimmerAnimator =
+                ObjectAnimator.ofFloat(
+                    binding.shimmerHighlight,
+                    View.TRANSLATION_X,
+                    -highlightWidth.toFloat(),
+                    parentWidth.toFloat()
+                ).apply {
+
+                    duration = 1000L
+
+                    repeatCount =
+                        ObjectAnimator.INFINITE
+
+                    interpolator =
+                        LinearInterpolator()
+
+                    start()
+                }
+        }
+    }
+
+    private fun stopShimmer() {
+
+        shimmerAnimator?.cancel()
+        shimmerAnimator = null
+
+        binding.loadingOverlay.visibility =
+            View.GONE
+    }
+
+    // --------------------------------------------------
     // RUNTIME
     // --------------------------------------------------
 
-    private fun formatRuntime(runtime: Int): String {
+    private fun formatRuntime(
+        runtime: Int
+    ): String {
 
         if (runtime <= 0) {
             return "N/A"
         }
 
-        val hours = runtime / 60
-        val minutes = runtime % 60
+        val hours =
+            runtime / 60
+
+        val minutes =
+            runtime % 60
 
         return if (hours > 0) {
 
@@ -276,8 +378,12 @@ class DetailsFragment : Fragment() {
             val textView =
                 TextView(requireContext())
 
-            textView.text = genre.name
-            textView.textSize = 12f
+            textView.text =
+                genre.name
+
+            textView.textSize =
+                12f
+
             textView.setTextColor(
                 resources.getColor(
                     R.color.genre_text,
@@ -309,13 +415,18 @@ class DetailsFragment : Fragment() {
                 0
             )
 
-            textView.layoutParams = params
+            textView.layoutParams =
+                params
 
             binding.genreContainer.addView(
                 textView
             )
         }
     }
+
+    // --------------------------------------------------
+    // DESTROY
+    // --------------------------------------------------
 
     override fun onDestroyView() {
 
@@ -338,9 +449,10 @@ class DetailsFragment : Fragment() {
 
             return DetailsFragment().apply {
 
-                arguments = bundleOf(
-                    ARG_MOVIE_ID to movieId
-                )
+                arguments =
+                    bundleOf(
+                        ARG_MOVIE_ID to movieId
+                    )
             }
         }
     }
